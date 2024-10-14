@@ -1,0 +1,1081 @@
+<!--
+  Project: Hack Heroes
+  File: challenge.html
+  Description: Main page and logic for executing challenges
+  Author: Chris Cooper
+  License: GNU AGPLv3
+  -----------------------------------------------------------
+  This file is part of the Hack Heroes project, an 
+  open-source educational initiative to teach cybersecurity 
+  to young learners.
+-->
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hack Heroes</title>
+
+    <!-- Alpine cloak - hides elements until Alpine has loaded -->
+    <style>[x-cloak] { display: none !important; }</style>
+
+    <!-- Stylesheets - Bulma + customisations -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+    <link rel="stylesheet" href="main.css">
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+</head>
+
+<!--
+  Body
+  ====
+  
+  Properties (x-data)
+  ------------------------------
+
+  blockedVars (Array<String>)
+  - Description: List of blocked global variables to prevent sandboxed JavaScript from accessing sensitive objects.
+
+  challenge (Object)
+  - Properties:
+    - tools (Array<String>): Tools available for the challenge.
+    - hints (Object): Hints provided for the current challenge.
+    - answers (Array<String>): Expected answers for validation.
+  - Description: Holds the dynamic configuration of the current challenge.
+
+  shadowRoot (ShadowRoot)
+  - Default: null
+  - Description: Reference to the Shadow DOM for encapsulating challenge content.
+
+  currentPage (String)
+  - Description: Tracks the URL or page currently being viewed in challenge browser.
+
+  content (String)
+  - Description: Stores the HTML content dynamically loaded from external resources for the challenge browser.
+
+  brief (String)
+  - Description: Holds the briefing or objective HTML for the challenge.
+
+  success (String)
+  - Description: Contains the success message HTML shown after completing the challenge.
+
+  briefOpen (Boolean)
+  - Default: true
+  - Description: Manages the visibility of the challenge briefing modal.
+
+  hideLoader (Boolean)
+  - Default: false
+  - Description: Controls visibility of the page's loading screen.
+
+  showPage (Boolean)
+  - Default: false
+  - Description: Determines whether the page content is displayed post-loading.
+
+  tools (Array<String>)
+  - Description: Contains the list of interactive tools (gadgets) available for the user.
+
+  store (StorageHandler)
+  - Default: null
+  - Description: Reference to the StorageHandler object managing local storage operations.
+
+  correct (Boolean)
+  - Default: false
+  - Description: Indicates if the user has submitted the correct answer.
+
+  state (Object)
+  - Properties:
+    - hintsRead (Array<Number>): Indices of hints the user has viewed.
+    - answer (String): The current answer input from the user.
+  - Description: Tracks user progress, including hints viewed and the current answer.
+
+  successOpen (Boolean)
+  - Default: false
+  - Description: Controls visibility of the success modal upon challenge completion.
+
+  showTokenBanner (Boolean)
+  - Default: false
+  - Description: Toggles the display of the token banner after completing an action-based challenge.
+
+  correctToken (String)
+  - Description: Stores the unique token provided upon successful action-based challenge completion.
+
+  urlAllowList (Array<String>) Computed Property
+  - Description: Returns an array of URLs allowed for the current challenge, based on assets related to the challenge ID.
+
+  Functions (x-data)
+  ------------------
+  
+  initAppState()
+  - Description: Initialises and synchronises state with localStorage, managing user progress and dynamic updates.
+
+  Summary of x-init:
+  ------------------
+  The x-init directive loads challenge data (JSON/Markdown), syncs local storage, dynamically resizes elements, and sets up event listeners.
+-->
+
+<body class="theme-dark" 
+
+x-data="{
+  blockedVars: ['window', 'document', 'challenge','$data','$root','Alpine','content','currentPage','brief','success','briefOpen','blockedVars','hideLoader','showPage','tools','store','correct','state','successOpen','showTokenBanner','correctToken'],
+  challenge: { tools:[], hints:{}, answers:[] },
+  shadowRoot:null,
+  currentPage:'',
+  content:'',
+  brief:'',
+  success:'',
+  briefOpen:true,
+  hideLoader:false,
+  showPage:false,
+  tools:[],
+  store: null,
+  correct: false,
+  state:{
+    hintsRead:[],
+    answer:''
+  },
+  successOpen:false,
+  showTokenBanner:false,
+  correctToken:'',
+  get urlAllowList() {
+    dir = this.challenge.id;
+    return this.challenge.assets.map(asset => `${dir}/${asset.file}`);
+  },
+  initAppState() { // Get state based on challenge ID and sync changes
+    // Use this class to handle local storage
+    this.store = new StorageHandler(this.challenge.id);
+    // Get initial state
+    this.state.answer = this.store.getAnswer();
+    this.state.hintsRead = this.store.getHintsRead();
+    // Alpine > LS sync
+    $watch('state.answer', (value) => { this.store.setAnswer(value); });
+    $watch('state.hintsRead', (value) => { this.store.setHintsRead(value); });
+    // LS > alpine sync
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'state') {
+        this.state.answer = this.store.getAnswer();
+        this.state.hintsRead = this.store.getHintsRead()
+      }
+    })
+  }
+}" 
+
+x-init="
+  await xaDelay(200); // Prevents flicker
+  try { // Try to load challenge data
+    // Get challenge ID from query string
+    const urlParams = new URLSearchParams(window.location.search);
+    const challengeId = urlParams.get('id');
+    // Get challenge JSON
+    challenge = await xaLoadJSON(challengeId+'/'+challengeId+'.json'); 
+    // Set initial variable values based on challenge data
+    currentPage = challenge.id+'/'+challenge.start;
+    brief = await xaLoadMD(challenge.id+'/brief.md'); // Get brief from a seperate file
+    success = marked.parse(challenge.success);
+    tools = challenge.tools;
+  } catch (e) {
+    console.error('Error loading challenge: '+e.message);
+  }
+  // Prepare localstorage <> Alpine to sync gamestate
+  initAppState();
+  // Prevents flicker
+  await xaDelay(100);
+  // Wait for DOM changes 
+  $nextTick(() => { 
+    // Run grow() on all elements with the following classes
+    // Fills vertical space
+    document.querySelectorAll('.grow').forEach(element => {
+      grow(element);
+    });
+    document.querySelectorAll('.growWithSiblings').forEach(element => {
+      grow(element,true);
+    });
+    // Show the page and hide the loader
+    // Timeouts prevent flicker
+    setTimeout(function(){showPage = true},100);
+    setTimeout(function(){hideLoader = true},500);
+  })
+">   
+
+<!--
+  Loader Modal
+  ============
+
+  `:class`
+  --------
+  Hides the modal is global hideLoader is true
+
+-->
+  <div class="modal is-active" :class="hideLoader ? 'is-hidden' : ''">
+    <div class="modal-background"></div>
+    <div class="modal-content">
+      <div class="loader-wrapper">
+        <div class="loader is-loading"></div>
+      </div>
+    </div>
+  </div>
+
+
+<!--```
+  Brief Modal
+  ===========
+
+  Shows the brief including mission name, mission icon, and brief HTML.
+
+  `:class`
+  --------
+  Shows the modal if global briefOpen is true
+
+  `x-show`
+  --------
+  Shows the modal if hideLoader is true
+  
+```-->
+  <div x-cloak class="modal" :class="briefOpen ? ' is-active' : ''" x-show="hideLoader">
+    <div class="modal-background"></div>
+    <div class="modal-card darkScroll" x-transition>
+      <header class="modal-card-head">
+        <p class="modal-card-title">Brief: <b x-text="challenge.name"></b></p>
+      </header>
+      <section class="modal-card-body">
+        <div class="block">
+          <figure class="image is-128x128 mx-auto">
+            <img :src="challenge.id+'/icon.png'">
+          </figure>
+        </div>
+        <div class="content has-text-left	" x-html="brief">
+        </div>
+      </section>
+      <footer class="modal-card-foot">
+        <div class="buttons is-centered mx-auto">
+          <button class="button is-success" @click="briefOpen=false">
+            <span>Let's go!</span>
+            <span class="icon">
+              <ion-icon name="thumbs-up"></ion-icon>
+            </span>
+          </button>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+<!--```
+  Success Modal
+  =============
+  A modal that displays a random success message and dynamically rendered content when a challenge is completed. It includes options to return to the mission page or close the modal.
+
+  `:class`
+  --------
+  - Adds the is-active class to display the modal when successOpen is true, making the modal visible.
+
+  `x-data`
+  --------
+  randomSuccessMsg (String) Computed Property
+  - Description: Generates a random success message from a predefined list of congratulatory messages 
+
+```-->
+  <div x-cloak class="modal" 
+    :class="successOpen ? ' is-active' : ''"
+    x-data="{
+      get randomSuccessMsg() {
+        const congratsMessages = [
+          'Cracked the Code!',
+          'Spy-tacular Success!',
+          'Firewall Flawless!',
+          'Data Defender!',
+          'Encryption Expert!',
+          'Mission Master!',
+          'Cyber Sleuth!',
+          'Code Commander!',
+          'Trojan Triumph!',
+          'Network Ninja!',
+          'Phish Finder!',
+          'Agent Awesome!',
+          'Bit Breaker!',
+          'Security Superstar!'
+        ];
+        return congratsMessages[Math.floor(Math.random() * congratsMessages.length)];
+      }
+    }">
+    <div class="modal-background"></div>
+    <div class="modal-content">
+      <div class="box has-text-centered">
+        <img src="super.png">
+        <div class="title is-3" x-text="randomSuccessMsg">
+        </div>
+        <div class="content" x-html="success">
+        </div>
+        <div class="buttons is-centered">
+            <a class="button is-primary" href="index.html">
+              <span class="icon">
+                <ion-icon name="arrow-back"></ion-icon>
+              </span> 
+              <span>Find Your Next Mission!</span>
+            </a>
+            <button class="button" @click="successOpen=false">
+              <span class="icon">
+                <ion-icon name="close"></ion-icon>
+              </span> 
+              <span>Close</span>
+            </button>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <section x-cloak class="hero is-fullheight grow" x-show="showPage">
+    <section class="section grow">
+      <div class="columns grow">
+        <div class="column is-half grow">
+          
+          <!--```
+            Menu
+            ====
+            Widget includes a back button, the mission name, the mission objective, and a link to the full brief
+          ```-->
+          <section class="level">
+            <div class="level-left">
+              <div class="level-item">
+                <a class="button is-large" href="index.html">
+                  <span class="icon is-medium has-text-info">
+                    <ion-icon name="chevron-back-outline" size="large"></ion-icon>
+                  </span>
+                </a>
+              </div>
+              <div class="level-item">
+                <div class="container">
+                  <p class="subtitle is-6">
+                    Mission:
+                  </p>
+                  <h3 class="title is-5" x-text="challenge.name"></h3>
+                </div>
+              </div>
+            </div>
+          </section>
+          <div class="block">
+            <p><b>Objective: </b><span x-text="challenge.objective"></span> <a @click="briefOpen=true">Read the brief.</a></p>
+          </div>
+          
+          <!--```
+            Answer Box
+            ==========
+            Input box and submit button for the answer; also shows status of answer (correct/incorrect)
+
+            Properties (x-data)
+            -------------------
+
+            answerNotSubmitted (String)
+            - Description: String which models value currently typed into answer input box.
+
+            showAsCorrect (Bool) Computed
+            - Description: If the answer is correct, the input box is not blank, and the input box still matches the answer submitted
+
+            showAsIncorrect (Bool) Computed
+            - Description: If the answer is incorrect, the input box is not blank, and the input box still matches the answer submitted
+
+            x-init
+            ------
+            If the answer in state variable / localstorage changes, evaluate if it is correct. If correct, open modal.
+
+            other
+            -----
+            When the submit button is clicked, the state variable (and therefore localstorage) is updated, which triggers the event configured in x-init.
+
+          ```-->
+          <div class="block" 
+            x-data="{
+              answerNotSubmitted:'',
+              get showAsCorrect() {
+                return correct && this.answerNotSubmitted && this.answerNotSubmitted == state.answer;
+              },
+              get showAsIncorrect() {
+                return !correct && this.answerNotSubmitted && this.answerNotSubmitted == state.answer
+              }
+            }"
+            x-init="
+              // Watch for changes to answer and evaluate if correct
+              $watch('state.answer', (value) => { 
+                if (answerNotSubmitted != value) { answerNotSubmitted = value }
+                xaCompareAnswer(challenge,value).then((result) => {
+                  correct = result;
+                  xaDelay(2000).then((result) => {
+                    successOpen = correct;
+                    briefOpen = correct ? false : briefOpen;
+                  });
+                });
+              });
+            "
+            >
+            <div class="field has-addons">
+              <div class="control is-expanded has-icons-right">
+                <input class="input" type="text" placeholder="Answer"
+                  x-model="answerNotSubmitted" 
+                  :class="showAsCorrect ? 'is-success' : (showAsIncorrect ? 'is-danger' : '')"
+                  @keydown.enter="state.answer = answerNotSubmitted">
+                <span class="icon is-medium is-right" x-show="showAsCorrect" 
+                :class="showAsCorrect ? 'is-success' : (showAsIncorrect ? 'is-danger' : '')">
+                  <ion-icon name="checkmark"></ion-icon>
+                </span>
+                <span class="icon is-medium is-right" x-show="showAsIncorrect" 
+                :class="showAsCorrect ? 'is-success' : (showAsIncorrect ? 'is-danger' : '')">
+                  <ion-icon name="close"></ion-icon>
+                </span>
+              </div>
+              <div class="control">
+                <button class="button is-info" @click="state.answer = answerNotSubmitted">
+                  <span class="icon is-medium">
+                    <ion-icon name="send"></ion-icon>
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!--```
+            Gadgets
+            =======
+            A panel containing an optional series of tools/gadgets for the user to make use of
+
+            Properties (x-data)
+            -------------------
+
+            selectedGadget (String) 
+            - Default: the 'hints' gadget
+            - Description: a string pertaining to the id of the currently selected gadget (determines which tab to show)
+
+            x-init
+            ------
+            When the challange is loaded, sets gadget to one in the list for that challenge. When the user changes gadget (tab), trigger resizes to ensure UI adjusts itself.
+
+            other
+            -----
+            Tabs only show gadgets defined in the challenge. 
+
+          ```-->
+          <div class="block growWithSiblings" x-data="{selectedGadget:'hints'}" x-init="
+            // When challenge data is loaded (challenge.tools), 
+            // if there is at least one tool, 
+            // change selected to the first one in the array.
+            $watch('challenge.tools', (newValue) => {
+              if ( challenge.tools.length >= 1) {
+                selectedGadget = challenge.tools[0];
+              }
+            });
+            // If gadget changes, wait until DOM updates, then force resize
+            $watch('selectedGadget', () => {
+              $nextTick(() => { 
+                setTimeout(function(){window.dispatchEvent(new Event('resize'));},0);
+                setTimeout(function(){window.dispatchEvent(new Event('resize'));},500);
+              });
+            });
+          ">
+            <div class="panel is-primary block hhToolbox grow darkScroll">
+              <p class="panel-heading"><ion-icon name="flash"></ion-icon> Gadgets</p>
+              <p class="panel-tabs">
+                <a x-data="{thisGadget:'htmlReader'}" 
+                  :class="selectedGadget == thisGadget ? 'is-active' : '' "
+                  x-show="challenge.tools.includes(thisGadget)"
+                  @click="selectedGadget = thisGadget">
+                  HTML Reader
+                </a>
+                <a x-data="{thisGadget:'htmlEditor'}" 
+                  :class="selectedGadget == thisGadget ? 'is-active' : '' "
+                  x-show="challenge.tools.includes(thisGadget)"
+                  @click="selectedGadget = thisGadget">
+                  HTML Editor
+                </a>
+                <a x-data="{thisGadget:'jsConsole'}" 
+                  :class="selectedGadget == thisGadget ? 'is-active' : '' "
+                  x-show="challenge.tools.includes(thisGadget)"
+                  @click="selectedGadget = thisGadget">
+                  JavaScript Console
+                </a>
+                <a x-data="{thisGadget:'encodedecode'}" 
+                  :class="selectedGadget == thisGadget ? 'is-active' : '' "
+                  x-show="challenge.tools.includes(thisGadget)"
+                  @click="selectedGadget = thisGadget">
+                  Decoder
+                </a>
+                <a x-data="{thisGadget:'pyConsole'}" 
+                  :class="selectedGadget == thisGadget ? 'is-active' : '' "
+                  x-show="challenge.tools.includes(thisGadget)"
+                  @click="selectedGadget = thisGadget">
+                  Python Console
+                </a>
+                <a x-data="{thisGadget:'hints'}" 
+                  :class="selectedGadget == thisGadget ? 'is-active' : '' "
+                  @click="selectedGadget = thisGadget">
+                  Hint-O-Matic
+                </a>
+              </p>
+
+              <!--```
+                HTML Editor
+                =======
+                Gadget for editing the in-challenge browser's HTML
+
+                Properties (x-data)
+                -------------------
+
+                editor (Object) 
+                - Description: an object that will contain an instance of Ace Editor
+
+                x-init
+                ------
+                Setup ace editor and event watchers to sync content with Alpine variable
+
+              ```-->
+              <div class="panel-block growWithSiblings" 
+                x-data="{editor:null}" 
+                x-init="
+                  // Setup Ace editor
+                  editor = ace.edit('htmlAceEditor');
+                  editor.session.setMode('ace/mode/html');
+                  editor.setTheme('ace/theme/monokai');
+                  editor.setOptions({
+                    showPrintMargin:false,
+                    showFoldWidgets:false,
+                    showGutter:false,
+                    wrapBehavioursEnabled: true,
+                    wrap: true,
+                    wrapMethod: 'auto'
+                  });
+                  // Add HTML content from the challenge
+                  editor.setValue(content, -1);
+                  // If editor changes, update model
+                  editor.session.on('change', () => {
+                    content = editor.getValue();
+                  });
+                  // If model changes, update editor
+                  $watch('content', (newValue) => {
+                    if (newValue !== editor.getValue()) {
+                      editor.setValue(newValue, -1);
+                    }
+                  });
+                  "
+                x-show="selectedGadget=='htmlEditor'">
+                <textarea
+                  class="textarea is-hidden"
+                  rows="10"
+                  x-model="content"
+                ></textarea>
+                <div id="htmlAceEditor" style="height: 200px; width: 100%" class="grow"></div>
+              </div>
+
+              <!--```
+                HTML Reader
+                =======
+                Gadget for reading the in-challenge browser's HTML
+
+                Properties (x-data)
+                -------------------
+
+                reader (Object) 
+                - Description: an object that will contain a read-only instance of Ace Editor
+
+                x-init
+                ------
+                Setup ace editor as read-only and add event watchers to sync content with Alpine variable
+
+              ```-->
+              <div class="panel-block growWithSiblings" 
+                x-data="{reader:null}" 
+                x-init="
+                  // Setup Ace editor
+                  reader = ace.edit('htmlAceReader');
+                  reader.session.setMode('ace/mode/html');
+                  reader.setTheme('ace/theme/monokai');
+                  reader.setOptions({
+                    readOnly:true,
+                    showPrintMargin:false,
+                    showFoldWidgets:false,
+                    showGutter:false,
+                    highlightActiveLine:false,
+                    highlightSelectedWord:false,
+                    wrapBehavioursEnabled: true,
+                    wrap: true,
+                    wrapMethod: 'auto'
+                  });
+                  // Add HTML content from the challenge
+                  reader.setValue(content, -1);
+                  // If model changes, update editor
+                  $watch('content', (newValue) => {
+                    if (newValue !== reader.getValue()) {
+                      reader.setValue(newValue, -1);
+                    }
+                  });
+                "
+                x-show="selectedGadget=='htmlReader'">
+                <textarea
+                  class="textarea is-hidden"
+                  rows="10"
+                  x-model="content"
+                ></textarea>
+                <div id="htmlAceReader" style="height: 200px; width: 100%" class="grow"></div>
+              </div>
+
+              <!--```
+                Decoder / Encoder Gadget
+                ========================
+                Gadget for decoding and encoding values
+
+                Properties (x-data)
+                -------------------
+
+                coderInput (String) 
+                - Description: submitted input string
+
+                coderInputNotSubmitted (String) 
+                - Description: model of the input string value in textarea
+
+                coderOutput (String)
+                - Description: output following the transformation
+
+                coderTypeSelected (String)
+                - Description: a string representing the ID of the chosen type/algorithm. Modelled to a select field.
+
+                coderFunctions (Object)
+                - Description: an object containing functions pertaining to each type/algorithm. Function keys must be equal to coderTypeSelected property.
+                - Functions:
+                    reverse: reverse the order of characters
+            
+                other
+                -----
+                When the action button is clicked, the selected function from coderFunctions is executed. 
+
+              ```-->
+              <div class="panel-block growWithSiblings gadget-panel-block" 
+                x-show="selectedGadget=='encodedecode'" 
+                :class="selectedGadget=='encodedecode' ? 'display-block' : ''"
+                x-data="{
+                  coderInput:'',
+                  coderInputNotSubmitted:'',
+                  coderOutput:'',
+                  coderTypeSelected:'reverse',
+                  coderFunctions:{
+                    'reverse': function() {
+                      console.log($data.input);
+                      $data.coderOutput = $data.coderInput.split('').reverse().join('');
+                    }
+                  }
+                }">
+                <div class="field">
+                  <div class="control">
+                    <textarea
+                      class="textarea has-fixed-size"
+                      placeholder="Enter text"
+                      rows="3"
+                      x-model="coderInputNotSubmitted"
+                    ></textarea>
+                  </div>
+                </div>
+                <div class="field has-addons">
+                  <div class="control is-expanded">
+                    <div class="select is-fullwidth">
+                      <select name="type" x-model="coderTypeSelected">
+                        <option value="reverse">Reverse</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="control">
+                    <button type="submit" class="button is-primary"
+                      @click="coderInput = coderInputNotSubmitted; output = coderFunctions[coderTypeSelected](coderInput)">
+                      <span class="icon">
+                        <ion-icon name="hammer"></ion-icon>
+                      </span>
+                    </button>
+                  </div>
+                </div>
+                <div class="control">
+                  <textarea
+                    class="textarea has-fixed-size"
+                    placeholder="Result"
+                    rows="3" readonly
+                    x-model="coderOutput"
+                  ></textarea>
+                </div>
+              </div>
+
+              <!--```
+                JS Console Gadget
+                =================
+                Gadget for executing JavaScript in the content of the in-challenge browser
+
+                Properties (x-data)
+                -------------------
+
+                jsOutput (String) 
+                - Description: output of all JS code executions within this gadget, as HTML
+
+                jsInput (String) 
+                - Description: model of the input string value in he input box
+
+                Functions (x-data)
+                ------------------
+
+                executeJS()
+                - Description: executes JS input and returns output (in jsOutput)
+
+              ```-->
+              <div class="panel-block growWithSiblings gadget-panel-block" 
+                x-show="selectedGadget=='jsConsole'" 
+                :class="selectedGadget=='jsConsole' ? 'display-block' : ''"
+                x-data="{
+                  jsOutput:'',
+                  jsInput:'',
+                  executeJS() {
+                    const code = this.jsInput;
+                    // If it's not the first line of output, insert an HTML linebreak
+                    if (this.jsOutput != '') { this.jsOutput += '<br>'; }
+                    // Add a line to repeat the input so user can see what commands generated each output line
+                    this.jsOutput += '&rarr; <span class=\'jsInput has-text-grey-light\'>' + he(this.jsInput) + '</span>';
+                    try {
+                      // Run eval in the context of shadowRoot
+                      //result = eval('with(shadowRoot) { ' + code + ' }');
+                      // List of global variables to block
+                      const blockedGlobals = blockedVars;
+                      // Create declarations that mask the blocked globals
+                      const blockedDeclarations = blockedGlobals.map(varName => `var ${varName} = undefined;`).join('\n');
+                      // Construct the code to be evaluated
+                      // Includes blocked declarations and sets document to shadowRoot
+                      const codeToEval = `
+                        (function(code) {
+                          ${blockedDeclarations}
+                          var document = this.shadowRoot;
+                          with (this.shadowRoot) {
+                            return eval(code);
+                          }
+                        }).call(this, ${JSON.stringify(code)});
+                      `;
+                      // Execute
+                      result = eval(codeToEval);
+                      // If it's not the first line of output, insert an HTML linebreak
+                      if (this.jsOutput != '') { this.jsOutput += '<br>'; }
+                      // If there was no output, render a checkmark
+                      result = (result !== undefined) ? result : '&#10004;';
+                      // Output the result with HTML styling
+                      this.jsOutput += '  <span class=\'jsOutput\'>' + he(String(result).trim()) + '</span>';
+                    } catch (e) {
+                      // If it's not the first line of output, insert an HTML linebreak
+                      if (this.jsOutput != '') { this.jsOutput += '<br>'; }
+                      // Output the error with HTML styling
+                      this.jsOutput += '  <span class=\'jsOutput\'>Error: ' + e.message.trim() + '</span>';
+                    } finally {
+                      // Clear the input field
+                      this.jsInput = '';
+                      // Once DOM changes are done, scroll to the bottom of the output
+                      $nextTick(() => { 
+                        document.getElementsByClassName('jsConsoleOutput')[0].scrollTop = document.getElementsByClassName('jsConsoleOutput')[0].scrollHeight;
+                      });
+                    }
+                  }
+                }">
+                <div class="block content jsConsoleOutput growWithSiblings is-size-7" x-html="jsOutput">
+                  Loading...
+                </div>
+                <div class="field has-addons">
+                  <div class="control is-expanded has-icons-left is-primary">
+                    <span class="icon is-medium is-left">
+                      <ion-icon name="chevron-forward"></ion-icon>
+                    </span>
+                    <input class="input" type="text" placeholder="Enter JavaScript code..."
+                      x-model="jsInput" 
+                      @keydown.enter="executeJS()">
+                  </div>
+                  <div class="control">
+                    <button class="button is-primary" @click="executeJS()">
+                      <span class="icon is-medium">
+                        <ion-icon name="rocket"></ion-icon>
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!--```
+                Hints Gadget
+                ============
+                Gadget for showing the user hints. Only gadget that always shows and does not need to be listed in the challenge file.
+                
+                - Loops over hints from the challenge.hints object
+                - Shows used hints based on hints read array in state
+                - Hints must be read in order (i.e. the button for hint 2 only shows after jint 1 has been read)
+
+              ```-->
+              <div class="panel-block growWithSiblings gadget-panel-block" 
+                x-show="selectedGadget=='hints'" 
+                :class="selectedGadget=='hints' ? 'display-block' : ''">
+                <div class="notification is-primary is-light">
+                      You have used <b x-text="state.hintsRead.length"></b> out of <b x-text="Object.keys(challenge.hints).length"></b> hints.
+                </div>
+                <template x-for="(hint, index) in challenge.hints">
+                  <div class="block" x-show="index<=state.hintsRead.length+1">
+                    <h5 class="title is-5 no-bottom-margin">Hint #<span x-text="index"></span></h5>
+                    <p x-show="state.hintsRead.includes(index)"><span x-html="marked.parse(hint)"></span></p>
+                    <div class="buttons is-centered" x-show="!state.hintsRead.includes(index)">
+                      <button class="button" @click="state.hintsRead.push(index)">
+                        <span class="icon">
+                          <ion-icon name="gift"></ion-icon>
+                        </span>
+                        <span>Give me a hint!</span>
+                      </button>
+                    </div>
+                  </div>
+                </template>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+        <div class="column is-half grow">
+
+          <!--```
+            Detector Banner
+            ===============
+            Banner shows once the challenge's detector script has identified the user has completed the necessary actions. Shows the user the token they need to copy into the answer box.
+          ```-->
+          <div class="block" x-show="showTokenBanner">
+            <article class="message is-primary">
+            <div class="message-header">
+              <p>Task Achieved!</p>
+              <!--```
+                Property
+                --------
+                copyingToken (Bool) 
+                - Description: tracks state of whether copying is in progress in order to show a loader
+              ```-->
+              <button class="button is-small is-pulled-right is-light" 
+                x-data="{copyingToken:false}"
+                @click="
+                  // State change: we are copying the token
+                  copyingToken = true;
+                  // Copy the token; when finished, set back to false
+                  navigator.clipboard.writeText(correctToken).then((a) => {
+                    xaDelay(500).then((b) => { // Delay for UX
+                      copyingToken = false;
+                    });
+                  });
+                "
+                :class="copyingToken ? 'is-loading' : ''">
+                <span class="icon">
+                  <ion-icon name="copy"></ion-icon>
+                </span>
+                <span>Copy Token</span>
+              </button>
+            </div>
+            <div class="message-body">
+              <p>Great job! You've done what's needed. Your mission token is: <b class="tag is-primary copyable uppercase" x-text="correctToken"></b></p> 
+              <p>Copy it into the answer box and submit!</p>
+            </div>
+          </div>
+
+          <!--```
+            In-Challenge Browser
+            ====================
+            Simulated browser window leveraging shadowRoot as a sandbox
+
+            Properties (x-data)
+            -------------------
+
+            currentPageNotSubmitted: (String) 
+            - Description: model of the value of the value in the simulated address bar
+
+            Functions (x-data)
+            ------------------
+
+            loadContent(page)
+            - Description: loads a page from a URL into the browser, or shows 404
+            - @param {string} page - URL to the resource to load in the browser
+
+            updateCurrentPage(page)
+            - Description: when address bar 'go' button is pressed, sets currentPage which triggers other functions
+            - @param {string} page - URL to the resource to load in the browser
+
+            x-init
+            ------
+            Configures an event to handle page loads when currentPage is modified
+
+          ```-->
+          <div class="block growWithSiblings">
+            <div class="panel is-primary block grow browser-panel" x-data="
+              {
+              loadContent(page) {
+                // If the page is specified and it's in the challenge's allow list
+                if (page!='' && urlAllowList.includes(page)) {
+                  // Get the page over networt
+                  // If successful, set the Alpine content variable
+                  // On error, capture in console
+                  fetch(page)
+                      .then(response => response.text())
+                      .then(html => {
+                          this.content = html;
+                      })
+                      .catch(error => {
+                          console.error('Error loading the page:', error);
+                      });
+                } else {
+                  // If page not specified on URL not on the list, show a 404 page
+                  fetch('404.html')
+                      .then(response => response.text())
+                      .then(html => {
+                          this.content = html;
+                      })
+                      .catch(error => {
+                          console.error('Error loading the 404 page:', error);
+                      });
+                }
+              },
+              currentPageNotSubmitted:'',
+              updateCurrentPage(page) {
+                currentPage = '';
+                if (page) {
+                  currentPage = page;
+                } else {
+                  currentPage = this.currentPageNotSubmitted;
+                }
+              }}"
+            x-init="
+              $watch('currentPage', (value) => loadContent(value));
+            ">
+              <!-- Address bar -->
+              <div class="panel-heading"
+                x-init="$watch('currentPage', (value) => currentPageNotSubmitted=value)">
+                <div class="field has-addons">
+                  <div class="control is-expanded">
+                    <input class="input" type="text" x-model="currentPageNotSubmitted" @keydown.enter="updateCurrentPage()">
+                  </div>
+                  <div class="control">
+                    <button class="button is-info" @click="updateCurrentPage()">
+                      <span class="icon is-medium">
+                        <ion-icon name="arrow-forward"></ion-icon>
+                      </span>
+                    </button>
+                  </div>
+                  <div class="control">
+                    <button class="button is-warning" @click="updateCurrentPage(challenge.id+'/'+challenge.start)">
+                      <span class="icon is-medium">
+                        <ion-icon name="refresh"></ion-icon>
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <!--```
+                In-Challenge Browser: Shadow Element
+                ====================================
+                The element within the browser which holds the page content
+
+                Functions (x-data)
+                ------------------
+
+                updateShadow()
+                - Description: takes HTML content from Alpine variable and outputs it into the shadow root
+
+                x-init
+                ------
+                
+
+              ```-->
+              <div id="browserShadowHost" class="panel-block display-block theme-light growWithSiblings gadget-panel-block" x-data="{
+                // Method to update the HTML of the shadow element when content changes
+                updateShadow() {
+                  // Preface content in a Bulma CSS sheet
+                  css='<link rel=\'stylesheet\' href=\'https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css\'>';
+                  // Wrap in an div with ID we manipulate later
+                  contentStart='<div class=\'content\' id=\'challengeHtmlContent\'>';
+                  contentEnd='</div>';
+                  // Set content
+                  shadowRoot.innerHTML = css + contentStart + content + contentEnd;
+                  $nextTick(() => { 
+                    // Load init and detector scripts
+                    // TODO analyse and maybe refactor to not re-run on every edit
+                    const script = document.createElement('script');
+                    // Set the source of the script
+                    script.src = challenge.id+'/script.js'; // External script file
+                    // Add an event listener to ensure the script is loaded before running any logic
+                    script.onload = () => {
+                      // Execute init script
+                      initRoot(shadowRoot);
+                      // Handle custom detector script for this function
+                      detector = getDetector();
+                      // Run detector at regular interval
+                      setInterval(() => {
+                        if ($data.shadowRoot) {
+                          try {
+                            // Challenge's unique detector function returns a string
+                            detectedString = detector($data.shadowRoot);
+                            console.log('Detector string:'+detectedString);
+                            // Convert string to a token
+                            xaDetectorToken(detectedString).then((token) => {
+                              // Check if the token is the answer
+                              xaCompareAnswer(challenge,token).then((result) => {
+                                // If yes, set token as global Alpine var
+                                if (result) {
+                                  correctToken = token;
+                                }
+                                // Result determines if token banner is shown
+                                showTokenBanner = result;
+                                // Force resize 
+                                $nextTick(() => { 
+                                  setTimeout(function(){window.dispatchEvent(new Event('resize'));},100);
+                                  setTimeout(function(){window.dispatchEvent(new Event('resize'));},500);
+                                });
+                              });
+                            });
+                          } catch(e) {
+                            console.log('Detector error: ' + e.message);
+                            detectedString = '';
+                          }
+                        }
+                      }, 3000);
+                    };
+                    // Error handler in case the script fails to load
+                    script.onerror = () => {
+                      console.error('Failed to load detector script inside shadow DOM.');
+                    };   
+                    // Append the script to the shadow root
+                    shadowRoot.appendChild(script);
+                    // We need the innerHTML property and content to be equivilent, and update if innerHTML changes
+                    // This ensures that we can reflect dynamic changes in editors without any unexpected formatting changes
+                    // So set the content to equal innerHTML
+                    content = shadowRoot.getElementById('challengeHtmlContent').innerHTML;
+                    setInterval(() => {
+                      content = shadowRoot.getElementById('challengeHtmlContent').innerHTML;
+                    }, 2000);
+                  });
+                }
+              }"
+              x-init="
+                // On init, set attach shadow root to this element, and watch content for changes
+                shadowRoot = $el.attachShadow({mode:'open'});
+                $watch('content', updateShadow);
+                // Intervene on click for a elements - capture and load in simulated browser
+                shadowRoot.addEventListener('click', (event) => {
+                  if (event.target.tagName === 'A' && event.target.href) {
+                    event.preventDefault(); // Prevent the default link behavior
+                    updateCurrentPage(challenge.id + xaRelUrl(event.target.href));
+                  }
+                });
+              ">
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </section>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.36.2/src-min-noconflict/ace.js"></script>
+  <script src="grow.js"></script>
+  <script src="applyBulmaClasses.js"></script>
+  <script src="StorageHandler.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/index.min.js"></script>
+  <script src="functions.js"></script>
+</body>
+</html>

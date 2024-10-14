@@ -1,0 +1,171 @@
+<!--
+  Project: Hack Heroes
+  File: index.html
+  Description: Project homepage and challenge list
+  Author: Chris Cooper
+  License: GNU AGPLv3
+  -----------------------------------------------------------
+  This file is part of the Hack Heroes project, an 
+  open-source educational initiative to teach cybersecurity 
+  to young learners.
+-->
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hack Heroes</title>
+    <style>[x-cloak] { display: none !important; }</style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body
+  x-data="{
+    challenges:{},
+    stageMap:{
+      'academy':'Agent Academy'
+    }
+  }"
+  x-init="
+    challengesObj = await xaLoadJSON('challenges.json');
+    for (var stage of challengesObj.stages) {
+      challenges[stage] = [];
+      console.log(challenges);
+    }
+    for (var challengeId of challengesObj.challenges) {
+      // Get challenge data from JSON 
+      challengeData = await xaLoadJSON(challengeId+'/'+challengeId+'.json');
+      challengeStore = new StorageHandler(challengeId);
+      answer = challengeStore.getAnswer();
+      hintsRead = challengeStore.getHintsRead();
+      challengeData.numHintsRead = hintsRead.length;
+      challengeData.numHints = Object.keys(challengeData.hints).length;
+      xaCompareAnswer(challengeData,answer).then((result) => {
+        challengeData.answerState = result ? 'Complete' : 'Incomplete';
+        challenges[challengeData.stage].push(challengeData);
+        console.log(challenges);
+      });
+    }
+  ">   
+
+    <section class="hero">
+      <div class="hero-body pb-0">
+        
+        <nav class="level">
+          <div class="level-left">
+            <div class="level-item">
+              <figure class="image is-128x128 is-pulled-left mr-4 mt-5">
+                <img src="hackheroes.png" height="128px">
+              </figure>
+            </div>
+            <div class="level-item">
+              <div class="block">
+                <div class="title pl-2 ">Hack Heroes</div>
+                <p class="subtitle pl-2 ">Master cyber skills, hack like a hero!</p>
+              </div>
+            </div>
+          </div>
+          <div class="level-right">
+            <p class="level-item">
+              <a class="button is-link" href="#what">What is this thing?</a>
+            </p>
+          </div>
+        </nav>
+      </div>
+    </section>
+    
+  
+
+    <div class="container">
+        <template x-for="stage,key in challenges">
+        
+        <section class="section">
+        <h1 class="title" x-text="stageMap[key]"></h1>
+        <div class="grid is-col-min-15">
+          <template x-for="challenge in stage">
+            <div class="cell">
+              <div class="card">
+                <div class="card-image pt-4 pl-4 pr-4">
+                  <figure class="image is-128x128 mx-auto">
+                    <img
+                      :src="challenge.id+'/icon.png'"
+                    />
+                  </figure>
+                </div>
+                <div class="card-content">
+                  <div class="content mb-0">
+                    <h5 x-text="challenge.name" class="title is-5 mb-1"></h5>
+                  </div>
+                  <div class="content mt-0 two-line-truncate" x-text="challenge.objective">
+                  </div>
+                </div>
+                <footer class="card-footer">
+                  <div class="card-footer-item" :class="challenge.answerState==='Complete' ? 'has-text-success' : ''">
+                    <ion-icon name="close" x-show="challenge.answerState==='Incomplete'"></ion-icon> 
+                    <ion-icon name="checkmark" x-show="challenge.answerState==='Complete'"></ion-icon> 
+                    &nbsp;<span x-text="challenge.answerState"></span>
+                  </div>
+                  <div class="card-footer-item"><div class="block has-text-centered"><b x-text="challenge.numHintsRead">0</b>/<span x-text="challenge.numHints"></span><br>hints used</div></div>
+                  <a :href="'challenge.html?id='+challenge.id" class="card-footer-item"><ion-icon name="open-outline"></ion-icon> &nbsp;Open</a>
+                </footer>
+              </div>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      </template>
+      <section class="section" id="what"> 
+        <h1 class="title">What is this thing?</h1>
+        <p class="block">Hack Heroes 🦸 is an open source project created to inspire young people to explore careers in 🛡️ cybersecurity. It covers a variety of cybersecurity topics through a series of in-browser 👾 challenges aimed at ages 8-14, but good fun for all.</p>
+        <p class="block">This project was started by Chris Cooper, a cybersecurity professional and 🥼 STEM ambassador based in the 🇬🇧 UK.</p>
+
+      </section>
+      <section class="section" x-data="{showDeleteDataPrompt:false}">
+        <h1 class="title">What about my data?</h1>
+        <p class="block">Hack Heroes stores anonymous data about the status of your challenges in your browser. You can play this game without providing any personal information, and we do not store any data about you or your gameplay on our servers.</p>
+        <p class="block">Currently it is not possible to save your game data or transfer it to another browser or device.</p>
+        <p class="block">
+          <button class="button is-danger is-small" 
+            @click="showDeleteDataPrompt=true"
+            :class="showDeleteDataPrompt ? 'is-loading' : ''"
+            >
+            Clear all mission data
+          </button>
+        </p>
+        <div class="message is-danger" x-show="showDeleteDataPrompt">
+          <div class="message-body">
+            This action will erase all mission progress and hints read on this device / in this browser. The challenges will be reset as if you are a brand new user. Are you sure you want to clear all mission data?
+            <div class="buttons has-addons"></div>
+              <button class="button is-danger" @click="
+                this.store = new StorageHandler();
+                // Get initial state
+                this.store.clearAllData();
+                location.reload();
+              ">
+                Yes
+              </button>
+              <button class="button" @click="showDeleteDataPrompt=false">No</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+    </div>
+
+    <footer class="footer">
+      <div class="content has-text-centered">
+        <p>
+          <strong>Hack Heroes</strong> by <a href="https://chriscooper.co">Chris Cooper</a>.
+          The source code is licensed under 
+          <a href="LICENSE.txt">GNU AGPLv3</a>.
+        </p>
+      </div>
+    </footer>
+
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <script src="StorageHandler.js"></script>
+  <script src="functions.js"></script>
+</body>
+</html>

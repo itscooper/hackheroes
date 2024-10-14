@@ -1,0 +1,27 @@
+
+{
+    "id":"ferriswheelfixup",
+    "name":"Ferris Wheel Fix-Up",
+    "stage":"academy",
+    "level":1,
+    "number":1,
+    "answers":[
+        "a5691ae4c7fea913be92c838fe1b23079cfe236e49ae18b274dbfd94cb9b188d"
+    ],
+    "answerCaseSensitive":false,
+    "answerAlphaNumeric":true,
+    "start":"index.html",
+    "objective":"Use JavaScript to restart the Ferris Wheel at FunLand and rescue the stranded visitors!",
+    "assets":[
+        {
+            "file":"index.html",
+            "type":"html"
+        }
+    ],
+    "tools":["jsConsole"],
+    "hints":{
+        "1":"You can use the JS Console gadget to run JavaScript functions. Try typing `help()` to get a clue.",
+        "2":"The `startFerrisWheel()` function should do the trick. Try entering this into the JS Console."
+    },
+    "success":"Well done, Agent! The Ferris Wheel is moving again, and the trapped visitors are now safe!"
+}

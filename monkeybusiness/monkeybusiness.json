@@ -1,0 +1,28 @@
+{
+    "id":"monkeybusiness",
+    "name":"Monkey Business",
+    "stage":"academy",
+    "level":1,
+    "number":1,
+    "answers":[
+        "24fe93c9e17cb80452e5d86f1c186fc2fda2482cd5f81d7d305c2295bdab0aec",
+        "509b6b0ef33c4936dc7cfb472a777b099627baaa7e4ae849c2048c4f54597106"
+    ],
+    "answerCaseSensitive":false,
+    "answerAlphaNumeric":true,
+    "start":"index.html",
+    "objective":"Find the hidden location of the Chaos Crew’s next prank on their website. Submit the location as your answer.",
+    "assets":[
+        {
+            "file":"index.html",
+            "type":"html"
+        }
+    ],
+    "tools":["htmlReader"],
+    "hints":{
+        "1":"The prank location might be hidden in plain sight. Try highlighting the page to reveal something secret.",
+        "2":"Can you see anything hidden in the HTML Inspector? This tool reveals the markup used to create the page.",
+        "3":"One trick that they might use is text that’s invisible because it’s the same color as the background."
+    },
+    "success":"You’ve cracked it! The Chaos Crew is planning to strike at the **City Zoo**. Now we can stop them before they slip and slide everyone into chaos!"
+}

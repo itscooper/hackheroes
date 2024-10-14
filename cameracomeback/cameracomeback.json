@@ -1,0 +1,29 @@
+
+{
+    "id":"cameracomeback",
+    "name":"Camera Comeback",
+    "stage":"academy",
+    "level":1,
+    "number":1,
+    "answers":[
+        "a750b1d49776b2db6797fb2b973c6d6638461f08c31e551a35b01564731000c2"
+    ],
+    "answerCaseSensitive":false,
+    "answerAlphaNumeric":true,
+    "start":"index.html",
+    "objective":"Use your hacking skills to re-enable the button and turn the cameras back on!",
+    "assets":[
+        {
+            "file":"index.html",
+            "type":"html"
+        }
+    ],
+    "tools":["htmlEditor"],
+    "hints":{
+        "1":"Look at the code for the ON button. Is there something that might be stopping it from being clicked?",
+        "2":"In HTML, buttons can have a property called \"disabled\" which prevents them from being clicked.",
+        "3":"In the editor, try removing the word \"disabled\" from the button, then see if you can click it."
+    },
+    "success":"Great job, Agent! You've turned the cameras back on and can now keep an eye on the Chaos Crew's activities!",
+    "detector":"[1,2,3,4].map(i => root.getElementById(`camera${i}`).src).join(', ')"
+}

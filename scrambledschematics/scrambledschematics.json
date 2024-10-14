@@ -1,0 +1,27 @@
+{
+    "id":"scrambledschematics",
+    "name":"Scrambled Schematics",
+    "stage":"academy",
+    "level":1,
+    "number":1,
+    "answers":[
+        "61969a853def9822d985ff984aa7515f0d92ccd190ed5a7f3d06f3bf6e82d2c4",
+        "ebf1eee550e1decd319d641155cfd344c68bc24bafcc3f5fa0c650f9645f6892"
+    ],
+    "answerCaseSensitive":false,
+    "answerAlphaNumeric":true,
+    "start":"index.html",
+    "objective":"Unscramble the hidden location from the Chaos Crew’s chat to figure out where inside City Zoo they’re planning their next prank.",
+    "assets":[
+        {
+            "file":"index.html",
+            "type":"html"
+        }
+    ],
+    "tools":["encodedecode"],
+    "hints":{
+        "1":"Try using the decoder gadget provided to help with this scrambled message.",
+        "2":"The scrambled word looks like it’s backwards. Try reversing the letters."
+    },
+    "success":"Nice work! The Chaos Crew’s target is the Monkey Habitat! You’ve stopped their first prank before it even started!"
+}

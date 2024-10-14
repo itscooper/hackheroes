@@ -1,0 +1,19 @@
+{
+    "_meta":{
+        "project":"Hack Heroes",
+        "file":"challenges.json",
+        "description":"An index/list of challenges and stages to populate the homepage",
+        "authors":["Chris Cooper"],
+        "license":"GNU AGPLv3"
+    },
+    "challenges":[
+        "monkeybusiness",
+        "scrambledschematics",
+        "purrfectpassword",
+        "cameracomeback",
+        "ferriswheelfixup"
+    ],
+    "stages":[
+        "academy"
+    ]
+}

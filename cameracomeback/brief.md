@@ -1,0 +1,3 @@
+Agent, urgent news! The Chaos Crew has sabotaged the zoo's CCTV system. They've turned off all the cameras and tampered with the control panel by disabling the ON button. Without the cameras, we can't monitor their sneaky moves around the zoo!
+
+Your mission is to outsmart the Chaos Crew by getting the cameras back online. You'll need to investigate the CCTV control webpage and figure out how to fix the ON button so it works again. Once you do, press the ON button to restore the live camera feeds. We believe in you, Agent—the entire zoo is counting on your quick thinking and tech skills!

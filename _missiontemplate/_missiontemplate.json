@@ -1,0 +1,37 @@
+{
+    "_meta":{
+        "project":"Hack Heroes",
+        "file":"_missiontemplate/_missiontemplate.json",
+        "description":"This is a template file for defining a new mission. Its parent directory, and the name of this file itself, must be the same as the mission ID. Use this field to describe the mission.",
+        "authors":["Chris Cooper"],
+        "license":"GNU AGPLv3"
+    },
+    "id":"_missiontemplate",
+    "name":"Mission Template",
+    "stage":"academy",
+    "level":1,
+    "number":1,
+    "answers":[
+        "50d858e0985ecc7f60418aaf0cc5ab587f42c2570a884095a9e8ccacd0f6545c"
+    ],
+    "answerCaseSensitive":false,
+    "start":"index.html",
+    "objective":"This is an example challenge so you know how this stuff works.",
+    "assets":[
+        {
+            "file":"index.html",
+            "type":"html"
+        },
+        {
+            "file":"1.html",
+            "type":"html"
+        }
+    ],
+    "tools":["htmlEditor","jsConsole","htmlReader","encodedecode"],
+    "hints":{
+        "1":"Here's an initial hint",
+        "2":"Here's a hint with some *italics*",
+        "3":"Here's one final hint which is a bit longer. Maybe it includes some more information. Or more **formatting!**"
+    },
+    "success":"**OMG** you did it!"
+}

@@ -1,0 +1,105 @@
+/*
+  Project: Hack Heroes
+  File: main.css
+  Description: Style overrides / customisation on top of Bulma
+  Author: Chris Cooper
+  License: GNU AGPLv3
+  -----------------------------------------------------------
+  This CSS file is part of the Hack Heroes project. 
+*/
+
+:root {
+    /* Fixes issue where icons in input boxes show as dark-on-dark */
+    --bulma-input-icon-hover-color: #FFF !important;
+    --bulma-input-icon-focus-color: #FFF !important;
+}
+
+.browser-panel {
+    /* The browser panel has a bulma-light theme running inside parent page's dark theme */
+    /* These tweaks fix issues where dark theme seems to be inherited */
+    background-color: #FFF;
+    .panel-heading {
+        background-color: rgb(0, 209, 178);
+    }
+    --bulma-strong-color: rgb(64, 70, 84);
+    --bulma-panel-block-color: rgb(64, 70, 84);
+}
+
+/* Adjusts gadget panel heading and tab font sizes */
+p.panel-heading {
+    --bulma-panel-heading-size: 0.9em;
+}
+p.panel-tabs {
+    --bulma-panel-tabs-font-size:0.8em;
+}
+
+/* default to white icons */
+.control ion-icon {
+    color: #FFF;
+}
+
+.loader-wrapper {
+    /* Style for a loading screen overlay */
+    top: 0;
+    left: 0;
+    height: 100px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 6px;
+    z-index: -100;
+    overflow: hidden;
+    .loader {
+      height: 80px;
+      width: 80px;
+      overflow: hidden;
+    }
+}
+
+.display-block {
+    /* Simple helper class to change display mode to block */
+    display: block !important;
+}
+
+.no-bottom-margin {
+    /* Needs replacing in HTML with Bulma's mb-0 helper class */
+    margin-bottom: 0 !important;
+}
+
+.gadget-panel-block {
+    /* Ensures that the browser and gadgets get a vertical scroll if they overflow */
+    overflow-y: auto;
+}
+
+.darkScroll {
+    /* Customises scroll bar for Bulma dark theme */
+    scrollbar-color: rgb(105, 116, 140) #14161a;
+}
+
+.two-line-truncate {
+    /* Only show two lines of text - used on cards when listing challemges */
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Limits to 2 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+.copyable {
+    /* Helper so text in the element is selectable with 1 click */
+    user-select: all;
+}
+
+.uppercase {
+    /* Uppercase helper */
+    text-transform: uppercase;
+}
+
+.jsConsoleOutput {
+    /* Style for the JS console output */
+    font-family: monospace;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
