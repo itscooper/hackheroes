@@ -14,12 +14,37 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hack Heroes</title>
+
+    <!-- Alpine cloak - hides elements until Alpine has loaded -->
     <style>[x-cloak] { display: none !important; }</style>
+
+    <!-- Stylesheets - Bulma + customisations -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="main.css">
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Analytics -->
     <script defer src="https://cloud.umami.is/script.js" data-website-id="c8727fdc-691f-45ec-ba17-769bd99ca129"></script>
 </head>
+<!--
+  Body
+  ====
+  
+  Properties (x-data)
+  ------------------------------
+
+  challenges (Object)
+  - Description: To contain a list of all challenges and their properties.
+
+  stageMap (Onject)
+  - Description: Object mapping stage IDs to names for display
+
+  x-init
+  ------
+  Loads a list of challenges, and then gets details for each one.
+-->
 <body
   x-data="{
     challenges:{},
@@ -28,23 +53,31 @@
     }
   }"
   x-init="
+    // Gets a list of all challenges and stages
     challengesObj = await xaLoadJSON('challenges.json');
+    // Creates a key for each stage so we can sort challenges by stage
     for (var stage of challengesObj.stages) {
       challenges[stage] = [];
       console.log(challenges);
     }
+    // Loop through each challenge ID
     for (var challengeId of challengesObj.challenges) {
       // Get challenge data from JSON 
       challengeData = await xaLoadJSON(challengeId+'/'+challengeId+'.json');
+      // Prepare to get data from localStorage
       challengeStore = new StorageHandler(challengeId);
+      // Get state info for the current challenge
       answer = challengeStore.getAnswer();
       hintsRead = challengeStore.getHintsRead();
-      challengeData.numHintsRead = hintsRead.length;
-      challengeData.numHints = Object.keys(challengeData.hints).length;
+      // Add state info to challenge object
+      challengeData.numHintsRead = hintsRead.length; // Number of hints read
+      challengeData.numHints = Object.keys(challengeData.hints).length; // Total hints available
+      // Check if the answer is correct
       xaCompareAnswer(challengeData,answer).then((result) => {
+        // Add answer status to challenge object
         challengeData.answerState = result ? 'Complete' : 'Incomplete';
+        // Add challenge data to the overall collection 
         challenges[challengeData.stage].push(challengeData);
-        console.log(challenges);
       });
     }
   ">   
