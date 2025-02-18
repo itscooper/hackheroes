@@ -39,4 +39,4 @@ This project is open-source. The source code is licensed under GNU AGPLv3.
 
 ## Testing
 
-This project is tested with BrowserStack.
+This project is tested with BrowserStack
