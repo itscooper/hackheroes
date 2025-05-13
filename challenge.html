@@ -995,7 +995,7 @@ x-init="
                     // TODO analyse and maybe refactor to not re-run on every edit
                     const script = document.createElement('script');
                     // Set the source of the script
-                    script.src = challenge.id+'/script.js'; // External script file
+                    script.src = 'challenges/' + challenge.id+'/script.js'; // Updated path to match new directory structure
                     // Add an event listener to ensure the script is loaded before running any logic
                     script.onload = () => {
                       // Execute init script
