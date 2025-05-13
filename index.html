@@ -20,7 +20,7 @@
 
     <!-- Stylesheets - Bulma + customisations -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
-    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="assets/css/main.css">
 
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -54,7 +54,7 @@
   }"
   x-init="
     // Gets a list of all challenges and stages
-    challengesObj = await xaLoadJSON('challenges.json');
+    challengesObj = await xaLoadJSON('config/challenges.json');
     // Creates a key for each stage so we can sort challenges by stage
     for (var stage of challengesObj.stages) {
       challenges[stage] = [];
@@ -63,7 +63,7 @@
     // Loop through each challenge ID
     for (var challengeId of challengesObj.challenges) {
       // Get challenge data from JSON 
-      challengeData = await xaLoadJSON(challengeId+'/'+challengeId+'.json');
+      challengeData = await xaLoadJSON('challenges/'+challengeId+'/'+challengeId+'.json');
       // Prepare to get data from localStorage
       challengeStore = new StorageHandler(challengeId);
       // Get state info for the current challenge
@@ -79,8 +79,7 @@
         // Add challenge data to the overall collection 
         challenges[challengeData.stage].push(challengeData);
       });
-    }
-  ">   
+    }">   
 
     <section class="hero">
       <div class="hero-body pb-0">
@@ -89,7 +88,7 @@
           <div class="level-left">
             <div class="level-item">
               <figure class="image is-128x128 is-pulled-left mr-4 mt-5">
-                <img src="hackheroes.png" height="128px">
+                <img src="assets/images/hackheroes.png" height="128px">
               </figure>
             </div>
             <div class="level-item">
@@ -122,7 +121,7 @@
                 <div class="card-image pt-4 pl-4 pr-4">
                   <figure class="image is-128x128 mx-auto">
                     <img
-                      :src="challenge.id+'/icon.png'"
+                      :src="'challenges/'+challenge.id+'/icon.png'"
                     />
                   </figure>
                 </div>
@@ -212,7 +211,7 @@
 
   <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-  <script src="StorageHandler.js"></script>
-  <script src="functions.js"></script>
+  <script src="assets/js/core/StorageHandler.js"></script>
+  <script src="assets/js/core/functions.js"></script>
 </body>
 </html>
