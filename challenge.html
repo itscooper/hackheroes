@@ -20,7 +20,7 @@
 
     <!-- Stylesheets - Bulma + customisations -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
-    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="assets/css/main.css">
 
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -169,10 +169,10 @@ x-init="
     const urlParams = new URLSearchParams(window.location.search);
     const challengeId = urlParams.get('id');
     // Get challenge JSON
-    challenge = await xaLoadJSON(challengeId+'/'+challengeId+'.json'); 
+    challenge = await xaLoadJSON(`challenges/${challengeId}/${challengeId}.json`); 
     // Set initial variable values based on challenge data
-    currentPage = challenge.id+'/'+challenge.start;
-    brief = await xaLoadMD(challenge.id+'/brief.md'); // Get brief from a seperate file
+    currentPage = `${challenge.id}/${challenge.start}`; // Remove 'challenges/' prefix here
+    brief = await xaLoadMD(`challenges/${challenge.id}/brief.md`); // Get brief from a seperate file
     success = marked.parse(challenge.success);
     tools = challenge.tools;
   } catch (e) {
@@ -242,7 +242,7 @@ x-init="
       <section class="modal-card-body">
         <div class="block">
           <figure class="image is-128x128 mx-auto">
-            <img :src="challenge.id+'/icon.png'">
+            <img :src="'challenges/'+challenge.id+'/icon.png'">
           </figure>
         </div>
         <div class="content has-text-left	" x-html="brief">
@@ -302,7 +302,7 @@ x-init="
     <div class="modal-background"></div>
     <div class="modal-content">
       <div class="box has-text-centered">
-        <img src="super.png">
+        <img src="assets/images/super.png">
         <div class="title is-3" x-text="randomSuccessMsg">
         </div>
         <div class="content" x-html="success">
@@ -907,10 +907,9 @@ x-init="
               loadContent(page) {
                 // If the page is specified and it's in the challenge's allow list
                 if (page!='' && urlAllowList.includes(page)) {
-                  // Get the page over networt
-                  // If successful, set the Alpine content variable
-                  // On error, capture in console
-                  fetch(page)
+                  // Get the page over network
+                  // Prepend 'challenges/' to the page path when fetching
+                  fetch('challenges/' + page)
                       .then(response => response.text())
                       .then(html => {
                           this.content = html;
@@ -996,7 +995,7 @@ x-init="
                     // TODO analyse and maybe refactor to not re-run on every edit
                     const script = document.createElement('script');
                     // Set the source of the script
-                    script.src = challenge.id+'/script.js'; // External script file
+                    script.src = 'challenges/' + challenge.id+'/script.js'; // Updated path to match new directory structure
                     // Add an event listener to ensure the script is loaded before running any logic
                     script.onload = () => {
                       // Execute init script
@@ -1074,10 +1073,10 @@ x-init="
   <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.36.2/src-min-noconflict/ace.js"></script>
-  <script src="grow.js"></script>
-  <script src="applyBulmaClasses.js"></script>
-  <script src="StorageHandler.js"></script>
+  <script src="assets/js/core/grow.js"></script>
+  <script src="assets/js/utils/applyBulmaClasses.js"></script>
+  <script src="assets/js/core/StorageHandler.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/index.min.js"></script>
-  <script src="functions.js"></script>
+  <script src="assets/js/core/functions.js"></script>
 </body>
 </html>

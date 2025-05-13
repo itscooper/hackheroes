@@ -30,7 +30,7 @@ operations manual.
 }
 function fstart() {
     root = document.getElementById('browserShadowHost').shadowRoot;
-    root.getElementById('ferrisWheelImage').src = 'ferriswheelfixup/ferris_on_obrtgopjasdngk.gif';
+    root.getElementById('ferrisWheelImage').src = 'challenges/ferriswheelfixup/ferris_on_obrtgopjasdngk.gif';
     root.getElementById('statusText').innerHTML = 'Ferris Wheel Status: <b>Running</b> 🟢';
     root.getElementById('statusText').classList.remove('has-text-danger');
     root.getElementById('statusText').classList.add('has-text-success');
