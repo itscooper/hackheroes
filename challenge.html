@@ -530,7 +530,10 @@ x-init="
 
               ```-->
               <div class="panel-block growWithSiblings" 
-                x-data="{editor:null}" 
+                x-data="{
+                  editor:null,
+                  editorHasFocus: false
+                }" 
                 x-init="
                   // Setup Ace editor
                   editor = ace.edit('htmlAceEditor');
@@ -546,13 +549,28 @@ x-init="
                   });
                   // Add HTML content from the challenge
                   editor.setValue(content, -1);
+                  
+                  // Track editor focus state
+                  editor.on('focus', function() {
+                    editorHasFocus = true;
+                  });
+                  
+                  editor.on('blur', function() {
+                    editorHasFocus = false;
+                    // Ensure content is synchronized when focus is lost
+                    if (editor.getValue() !== content) {
+                      editor.setValue(content, -1);
+                    }
+                  });
+                  
                   // If editor changes, update model
                   editor.session.on('change', () => {
                     content = editor.getValue();
                   });
-                  // If model changes, update editor
+                  
+                  // If model changes, update editor only if editor doesn't have focus
                   $watch('content', (newValue) => {
-                    if (newValue !== editor.getValue()) {
+                    if (!editorHasFocus && newValue !== editor.getValue()) {
                       editor.setValue(newValue, -1);
                     }
                   });
