@@ -13,6 +13,6 @@ function getDetector() {
         return values.join('');
     };
 }
-function custom() {
-    return `This function can be executed from within the in-challenge JS Console gadget.`;
+function help() {
+    return `This function can be executed from within the in-challenge JS Console gadget. Define functions like this one for the player to call as part of the challenge`;
 }
