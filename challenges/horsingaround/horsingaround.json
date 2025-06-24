@@ -1,0 +1,27 @@
+{
+    "id": "horsingaround",
+    "name": "Horsing Around",
+    "stage": "academy",
+    "level": 1,
+    "number": 1,
+    "answers": [
+        "1009d711aa9c533977a457c96bbfcf224422b63c5424c1106a8e1d52602a8a44"
+    ],
+    "answerCaseSensitive": false,
+    "answerAlphaNumeric":true,
+    "start": "index.html",
+    "objective": "Find and decode the carousel reset code hidden in the HTML.",
+    "assets": [
+        {
+            "file": "index.html",
+            "type": "html"
+        }
+    ],
+    "tools": ["htmlReader", "encodedecode"],
+    "hints": {
+        "1": "Use the HTML Reader to inspect hidden parts of the page. Can you see a reset code?",
+        "2": "The reset code is encoded. Use the Decoder gadget to decode it. What settings should you use?",
+        "3": "The HTML suggests selecting the 'Caesar Shift' option in the Decoder gadget, with a '+1' shift."
+    },
+    "success": "The carousel spins back to life! Well done, Agent!"
+}
