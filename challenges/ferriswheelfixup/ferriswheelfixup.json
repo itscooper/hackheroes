@@ -22,7 +22,7 @@
     "tools":["jsConsole"],
     "hints":{
         "1":"You can use the JS Console gadget to run JavaScript functions. Try typing `help()` to get a clue.",
-        "2":"The `startFerrisWheel()` function should do the trick. Try entering this into the JS Console."
+        "2":"The `fstart()` function should do the trick. Try entering this into the JS Console."
     },
     "success":"Well done, Agent! The Ferris Wheel is moving again, and the trapped visitors are now safe!"
 }
